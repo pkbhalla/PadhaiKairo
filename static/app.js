@@ -1263,6 +1263,10 @@ function renderMarkdown(md) {
   if (!md) return '';
   let html = md;
 
+  // Convert LaTeX math $$...$$ (display) and $...$ (inline)
+  html = html.replace(/\$\$(.+?)\$\$/gms, '<div class="math-display">$1</div>');
+  html = html.replace(/\$([^$\n]+)\$/gms, '<span class="math-inline">$1</span>');
+
   // Convert code blocks (```lang ... ```)
   html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
     return `<pre class="code-block"><code class="lang-${lang}">${escHtml(code.trim())}</code></pre>`;

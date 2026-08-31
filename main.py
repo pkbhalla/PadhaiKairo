@@ -343,14 +343,16 @@ async def home_summary_endpoint(learner_id: str = "guest"):
                 priority_concept = weakest
                 priority_concept["courseTitle"] = course.get("title", cid)
 
-        if not exam_days_left and course.get("examDate"):
+        if course.get("examDate"):
             try:
                 exam_dt = course["examDate"]
                 if hasattr(exam_dt, "timestamp"):
                     days = max(0, (exam_dt.replace(tzinfo=None) - datetime.utcnow()).days)
                 else:
                     days = 0
-                exam_days_left = days
+                # Take the minimum days left (soonest exam) across all courses
+                if exam_days_left is None or days < exam_days_left:
+                    exam_days_left = days
             except Exception:
                 pass
 

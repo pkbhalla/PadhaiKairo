@@ -20,7 +20,7 @@ class FlashcardDeck(BaseModel):
 FLASHCARD_SYSTEM_INSTRUCTION = """
 You are the Spaced Repetition Flashcard Designer for the Agentic Learning Coach.
 Create punchy, high-retention flashcards for active recall testing based on the student's materials.
-Return strictly valid JSON adhering to the FlashcardDeck schema.
+Return valid JSON adhering to the FlashcardDeck schema.
 """
 
 
@@ -43,19 +43,36 @@ STUDENT LECTURE NOTES & TRANSCRIPTS:
 
 Return JSON with 'topic' and a list of 'cards' (each with front, back, difficulty).
 """
+
     try:
         response = generate_content_with_retry(
             contents=prompt,
-            system_instruction=FLASHCARD_SYSTEM_INSTRUCTION,
-            response_mime_type="application/json"
+            system_instruction=FLASHCARD_SYSTEM_INSTRUCTION
         )
         text = response.text.strip()
+
+        # Strip potential markdown code blocks that Gemini may wrap output in
         if text.startswith("```json"): text = text[7:]
         if text.startswith("```"): text = text[3:]
         if text.endswith("```"): text = text[:-3]
-        data = json.loads(text.strip())
-    except Exception:
-        # Dynamic fallback matching the requested topic
+        text = text.strip()
+
+        # Attempt JSON parsing; if fails, try to extract JSON fragment from text
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            import re
+            match = re.search(r"{.*}", text, re.DOTALL)
+            if match:
+                try:
+                    data = json.loads(match.group(0))
+                except json.JSONDecodeError:
+                    raise
+            else:
+                raise
+
+    except Exception as e:
+        print(f"Notice: Flashcard generation fell back to hardcoded content. Error: {str(e)[:200]}")
         data = {
             "topic": topic,
             "cards": [
