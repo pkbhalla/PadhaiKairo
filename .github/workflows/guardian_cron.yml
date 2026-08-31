@@ -1,0 +1,20 @@
+name: Autonomous Retention Guardian Nightly Cron
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Runs daily at 2:00 AM UTC
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  retention-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Retention Guardian Scan
+        run: |
+          APP_URL="${{ secrets.APP_URL }}"
+          if [ -z "$APP_URL" ]; then
+            echo "APP_URL secret is not set yet. Skipping scan."
+            exit 0
+          fi
+          echo "Scanning retention decay on $APP_URL..."
+          curl -X POST "$APP_URL/guardian/scan" -H "Content-Type: application/json"

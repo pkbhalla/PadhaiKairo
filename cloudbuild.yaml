@@ -1,0 +1,34 @@
+steps:
+  # 1. Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/padhaikairo:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/padhaikairo:latest'
+      - '.'
+
+  # 2. Push image to Google Container Registry / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/padhaikairo:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/padhaikairo:latest']
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'padhaikairo'
+      - '--image=gcr.io/$PROJECT_ID/padhaikairo:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=USE_VERTEX_AI=true,VERTEX_AI_LOCATION=us-central1,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,MODEL=gemini-2.5-flash'
+
+images:
+  - 'gcr.io/$PROJECT_ID/padhaikairo:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/padhaikairo:latest'

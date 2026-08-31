@@ -1,0 +1,13 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+token.json
+client_secret*.json
+.pytest_cache
+.vscode
+.idea

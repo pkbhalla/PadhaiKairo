@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PadhaiKairo — Your AI Study Coach</title>
+  <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg">
+  <link rel="shortcut icon" href="/static/favicon/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="/static/favicon/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="kairo-layout">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════ -->
+  <header class="kairo-header">
+    <div class="header-left">
+      <!-- Wordmark -->
+      <a href="/app" class="kairo-wordmark">
+        <span class="wm-icon">
+          <img src="/static/logo3.png" alt="PadhaiKairo">
+        </span>
+        PadhaiKairo
+      </a>
+
+      <span style="color:var(--border); user-select:none;">│</span>
+
+      <!-- Subject Selector -->
+      <div class="subject-selector">
+        <span style="font-size:0.9rem;">📚</span>
+        <select id="subject-select" onchange="handleSubjectChange(this.value)">
+          <option value="__new__">+ Add First Subject</option>
+        </select>
+        <button class="icon-btn" onclick="openEditSubjectModal()" title="Edit active subject details & exam date" style="width:26px;height:26px;font-size:0.75rem;border:none;background:transparent;padding:0;">✏️</button>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <!-- Exam countdown pill (clickable to edit) -->
+      <div class="exam-pill" id="exam-pill" style="display:none; cursor:pointer;" onclick="openEditExamModal()" title="Click to change target exam date & re-plan">
+        ⏰ <span id="exam-days-text">—</span> <span style="font-size:0.7rem; opacity:0.7; margin-left:4px;">✏️</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Theme toggle -->
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
+
+      <!-- Run Scan (shown only on Guardian panel) -->
+      <button class="btn btn-danger btn-sm" id="btn-run-scan" style="display:none;" onclick="runRetentionScan()">
+        ⚡ Run Scan
+      </button>
+
+      <!-- User menu -->
+      <div class="user-menu" onclick="toggleUserDropdown()" id="user-menu">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <span id="user-name-short">Loading…</span>
+        <span style="font-size:0.65rem;color:var(--text-faint);">▾</span>
+      </div>
+
+      <!-- User dropdown -->
+      <div id="user-dropdown" style="
+        display:none; position:absolute; top:58px; right:1rem; z-index:200;
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+        box-shadow:var(--shadow-lg); min-width:220px; overflow:hidden;">
+        <div style="padding:0.75rem 1rem; border-bottom:1px solid var(--border);">
+          <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary);" id="user-email-full">—</div>
+          <div style="font-size:0.72rem; color:var(--text-muted);" id="user-pace-badge">Pace: Moderate</div>
+        </div>
+        <a href="javascript:void(0)" onclick="openProfileModal(); toggleUserDropdown();" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1rem; font-size:0.85rem; font-weight:500; color:var(--text-primary); text-decoration:none; transition:background 0.15s; border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          👤 Student Profile & Settings
+        </a>
+        <a href="/auth/logout" style="display:block; padding:0.65rem 1rem; font-size:0.85rem; font-weight:500; color:var(--danger); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--danger-bg)'" onmouseout="this.style.background='transparent'">
+          Sign Out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY (SIDEBAR + MAIN) ═══════════════════════════════ -->
+  <div class="kairo-body">
+
+    <!-- ── LEFT SIDEBAR ──────────────────────────────────── -->
+    <aside class="kairo-sidebar">
+
+      <!-- SOURCES SECTION -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Sources</div>
+
+        <!-- Add Source button -->
+        <button class="btn-add-source" onclick="toggleAddSourceDrawer()">
+          <span>＋</span> Add Source
+        </button>
+
+        <!-- Add Source Drawer (inline, expandable) -->
+        <div class="add-source-drawer" id="add-source-drawer">
+          <div class="drawer-tabs">
+            <button class="drawer-tab active" id="tab-yt" onclick="switchDrawerTab('yt')">📺 YouTube</button>
+            <button class="drawer-tab" id="tab-notes" onclick="switchDrawerTab('notes')">📝 Notes</button>
+          </div>
+
+          <!-- YouTube tab -->
+          <div id="drawer-yt">
+            <div class="form-group">
+              <input type="text" id="yt-url-input" placeholder="https://youtube.com/watch?v=..."
+                style="font-size:0.82rem;" oninput="onYtUrlInput()">
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%; justify-content:center;" onclick="fetchYtTranscript()">
+              Extract Captions
+            </button>
+            <div id="yt-status" style="font-size:0.74rem; color:var(--text-muted); margin-top:0.4rem; min-height:1.2rem;"></div>
+          </div>
+
+          <!-- Notes tab (hidden by default) -->
+          <div id="drawer-notes" style="display:none;">
+            <div class="form-group">
+              <textarea id="notes-input" placeholder="Paste your lecture notes, syllabus, or any text here…"
+                style="font-size:0.82rem; min-height:100px;" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+              <input type="text" id="notes-title-input" placeholder="Source title (e.g. Week 3 Notes)"
+                style="font-size:0.82rem;">
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%; justify-content:center;" onclick="addNotesSource()">
+              Add Notes
+            </button>
+          </div>
+        </div>
+
+        <!-- Sources list -->
+        <div id="sources-list">
+          <div class="empty-state" style="padding:1.5rem 0.5rem; gap:0.4rem;">
+            <span class="empty-icon" style="font-size:1.75rem;">📂</span>
+            <span class="empty-desc" style="font-size:0.78rem;">No sources yet. Add a YouTube lecture or paste your notes.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOOLS NAV SECTION -->
+      <div class="sidebar-section" style="border-bottom:none; flex:1;">
+        <div class="sidebar-section-title">Tools</div>
+        <nav class="sidebar-nav" style="padding:0;">
+          <div class="nav-item active" onclick="switchPanel('home')" id="nav-home">
+            <span class="nav-icon">🏠</span> Home
+          </div>
+          <div class="nav-item" onclick="switchPanel('chat')" id="nav-chat">
+            <span class="nav-icon">💬</span> Chat Coach
+          </div>
+          <div class="nav-item" onclick="switchPanel('flashcards')" id="nav-flashcards">
+            <span class="nav-icon">🗂️</span> Flashcards
+          </div>
+          <div class="nav-item" onclick="switchPanel('quiz')" id="nav-quiz">
+            <span class="nav-icon">📝</span> Practice Quiz
+          </div>
+          <div class="nav-item" onclick="switchPanel('guide')" id="nav-guide">
+            <span class="nav-icon">📖</span> Study Guide
+          </div>
+          <div class="nav-item" onclick="switchPanel('mastery')" id="nav-mastery">
+            <span class="nav-icon">📊</span> Mastery Graph
+          </div>
+          <div class="nav-item" onclick="switchPanel('guardian')" id="nav-guardian">
+            <span class="nav-icon">🚨</span> Retention Guardian
+          </div>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- ── MAIN PANEL ─────────────────────────────────────── -->
+    <main class="kairo-main">
+
+      <!-- ▸ HOME PANEL ─────────────────────────────────────── -->
+      <div class="tool-panel active" id="panel-home">
+        <div class="panel-header">
+          <div class="panel-title">🏠 Dashboard</div>
+        </div>
+        <div class="panel-content" id="home-content">
+          <div class="home-greeting" id="home-greeting">Good evening!</div>
+          <div class="home-sub" id="home-sub">Loading your study summary…</div>
+
+          <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+              <div class="stat-value" id="stat-subjects">—</div>
+              <div class="stat-label">Active Subjects</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-sources">—</div>
+              <div class="stat-label">Ingested Sources</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-days">—</div>
+              <div class="stat-label">Days to Exam</div>
+            </div>
+          </div>
+
+          <!-- Priority concept card -->
+          <div id="priority-card-wrap" style="margin-bottom:1.5rem; display:none;">
+            <div class="priority-card">
+              <div class="priority-label">⚠️ Needs Review</div>
+              <div class="priority-concept" id="priority-concept-name">—</div>
+              <div class="priority-mastery" id="priority-mastery-text">—</div>
+              <button class="btn btn-sm btn-danger" style="margin-top:0.75rem;" onclick="switchPanel('quiz'); setQuizTopic(document.getElementById('priority-concept-name').innerText);">
+                Practice Now →
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div style="margin-bottom:1rem;">
+            <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.06em;">Quick Actions</div>
+            <div class="quick-actions">
+              <button class="btn btn-primary" onclick="switchPanel('chat')">💬 Start Chatting</button>
+              <button class="btn btn-ghost" onclick="switchPanel('flashcards'); generateFlashcards()">🗂️ Generate Flashcards</button>
+              <button class="btn btn-ghost" onclick="switchPanel('quiz'); generateCustomQuiz()">📝 Practice Quiz</button>
+              <button class="btn btn-ghost" onclick="showAddSubjectModal()">＋ Add Subject</button>
+            </div>
+          </div>
+
+          <!-- No subjects empty state -->
+          <div id="home-empty" style="display:none;">
+            <div style="background:var(--brand-light); border:1.5px dashed var(--brand); border-radius:var(--radius-lg); padding:2rem; text-align:center; max-width:480px; margin:2rem auto;">
+              <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎓</div>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:1rem; color:var(--text-primary); margin-bottom:0.4rem;">
+                Welcome to PadhaiKairo!
+              </div>
+              <div style="font-size:0.88rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.25rem;">
+                Add your first subject to get started. Paste a YouTube lecture link or your notes, and PadhaiKairo will build a personalized mastery map.
+              </div>
+              <button class="btn btn-primary" onclick="showAddSubjectModal()">＋ Add Your First Subject</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ CHAT PANEL ─────────────────────────────────────── -->
+      <div class="tool-panel" id="panel-chat">
+        <div class="panel-header">
+          <div class="panel-title">💬 Chat Coach</div>
+          <div class="panel-actions">
+            <div class="grounding-badge" id="grounding-badge" style="display:none;">
+              ● Grounded in your sources
+            </div>
+          </div>
+        </div>
+        <div class="chat-panel">
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg msg-agent">
+              👋 Hello! I'm your <strong>PadhaiKairo Coach</strong>.<br>
+              Ask me any conceptual question about your subject. I'll guide your thinking step-by-step — using your ingested lectures as context.
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="quick-chips" id="chat-chips">
+              <span class="chip" onclick="quickPrompt('Explain this concept step by step')">🔍 Explain a concept</span>
+              <span class="chip" onclick="quickPrompt('Quiz me on the key ideas')">🎯 Quiz me</span>
+              <span class="chip" onclick="quickPrompt('Help me plan my revision into Google Calendar')">📅 Plan revision</span>
+              <span class="chip" onclick="quickPrompt('What should I review before my exam?')">⚡ Exam focus</span>
+            </div>
+            <div class="chat-input-row">
+              <textarea class="chat-textarea" id="chat-input"
+                placeholder="Ask a question, request a quiz, or say 'plan my revision'…"
+                rows="1"
+                onkeydown="handleChatKey(event)"
+                oninput="autoResizeTextarea(this)"></textarea>
+              <button class="btn btn-primary" onclick="sendChatMessage()" style="height:44px; padding: 0 1.1rem; flex-shrink:0;">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ FLASHCARDS PANEL ───────────────────────────────── -->
+      <div class="tool-panel" id="panel-flashcards">
+        <div class="panel-header">
+          <div class="panel-title">🗂️ Active Recall Flashcards</div>
+          <div class="panel-actions">
+            <input type="text" id="fc-topic-input" placeholder="Subtopic…" style="width:160px; font-size:0.82rem; padding:0.4rem 0.7rem;">
+            <button class="btn btn-primary btn-sm" onclick="generateFlashcards()">Generate Deck</button>
+          </div>
+        </div>
+
+        <!-- Card stage -->
+        <div class="flashcard-stage" id="fc-stage">
+          <div class="empty-state">
+            <span class="empty-icon">🗂️</span>
+            <span class="empty-title">No flashcards yet</span>
+            <span class="empty-desc">Enter a subtopic above and click Generate Deck to create active recall cards from your lectures.</span>
+          </div>
+        </div>
+
+        <!-- Keyboard hint -->
+        <div style="text-align:center; padding:0.75rem; border-top:1px solid var(--border); background:var(--bg-card);">
+          <span class="kb-hint">
+            <kbd class="kb-key">Space</kbd> flip &nbsp;·&nbsp;
+            <kbd class="kb-key">←</kbd> prev &nbsp;·&nbsp;
+            <kbd class="kb-key">→</kbd> next
+          </span>
+        </div>
+      </div>
+
+      <!-- ▸ QUIZ PANEL ──────────────────────────────────────── -->
+      <div class="tool-panel" id="panel-quiz">
+        <div class="panel-header">
+          <div class="panel-title" id="quiz-title">📝 Practice Quiz</div>
+          <div class="panel-actions">
+            <input type="text" id="quiz-topic-input" placeholder="Subtopic…" style="width:160px; font-size:0.82rem; padding:0.4rem 0.7rem;">
+            <button class="btn btn-primary btn-sm" onclick="generateCustomQuiz()">Generate Drill</button>
+            <button class="btn btn-success btn-sm" id="btn-submit-quiz" style="display:none;" onclick="submitQuiz()">Submit Answers</button>
+          </div>
+        </div>
+        <div class="panel-content" id="quiz-body">
+          <div class="empty-state">
+            <span class="empty-icon">📝</span>
+            <span class="empty-title">Ready to drill?</span>
+            <span class="empty-desc">Enter a subtopic or click on a concept in your Mastery Graph to start a targeted 5-question drill.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ STUDY GUIDE PANEL ───────────────────────────────── -->
+      <div class="tool-panel" id="panel-guide">
+        <div class="panel-header">
+          <div class="panel-title">📖 Study Guide</div>
+          <div class="panel-actions">
+            <input type="text" id="guide-topic-input" placeholder="e.g. Backpropagation" style="width:200px; font-size:0.82rem; padding:0.4rem 0.7rem;">
+            <button class="btn btn-primary btn-sm" onclick="generateStudyGuide()">⚡ Generate</button>
+            <button class="btn btn-ghost btn-sm" id="btn-copy-guide" style="display:none;" onclick="copyGuide()">📋 Copy</button>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div id="guide-output">
+            <div class="empty-state">
+              <span class="empty-icon">📖</span>
+              <span class="empty-title">Generate a Study Guide</span>
+              <span class="empty-desc">Enter a subtopic above. Kairo will produce a structured briefing with key concepts, comparisons, and FAQs — grounded in your ingested lectures.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ MASTERY GRAPH PANEL ────────────────────────────── -->
+      <div class="tool-panel" id="panel-mastery">
+        <div class="panel-header">
+          <div class="panel-title">📊 Mastery & Decay Graph</div>
+          <div class="panel-actions">
+            <div id="mastery-exam-badge" style="font-size:0.8rem; color:var(--text-muted);"></div>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div id="mastery-list">
+            <div class="empty-state">
+              <span class="empty-icon">📊</span>
+              <span class="empty-title">No mastery data yet</span>
+              <span class="empty-desc">Add a subject and take practice quizzes to build your forgetting-curve mastery graph.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ RETENTION GUARDIAN PANEL ──────────────────────── -->
+      <div class="tool-panel" id="panel-guardian">
+        <div class="panel-header">
+          <div class="panel-title">🚨 Retention Guardian</div>
+          <div class="panel-actions">
+            <div style="font-size:0.75rem; background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-border); padding:0.2rem 0.6rem; border-radius:var(--radius-full); font-weight:700;">
+              Human-in-the-Loop
+            </div>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; padding:1.5rem; flex:1; overflow-y:auto;">
+          <!-- Nudge Queue -->
+          <div>
+            <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:0.75rem;">
+              Nudge Approval Queue
+            </div>
+            <div id="nudges-container">
+              <div class="empty-state" style="padding:2rem 0;">
+                <span class="empty-icon">✅</span>
+                <span class="empty-title">All clear!</span>
+                <span class="empty-desc">Run a retention scan to detect decaying knowledge and queue study nudges.</span>
+              </div>
+            </div>
+          </div>
+          <!-- Calendar -->
+          <div>
+            <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:0.75rem;">
+              Google Calendar Integration
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem; margin-bottom:1rem;">
+              <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem;">
+                Spaced revision sessions are written directly into your Google Calendar — backward-planned from your exam date.
+              </p>
+              <div style="background:var(--success-bg); border:1px solid var(--success-border); border-radius:var(--radius-sm); padding:0.65rem; font-size:0.82rem; color:var(--success); font-weight:600;">
+                ✓ Google Calendar connected via OAuth
+              </div>
+            </div>
+            <button class="btn btn-ghost" style="width:100%; justify-content:center;" onclick="syncCalendarPlan()">
+              📅 Sync Revision Plan to Calendar
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ ADD SUBJECT MODAL ════════════════════════════════════ -->
+<div class="modal-overlay" id="add-subject-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🚀 Add a New Subject</div>
+      <button class="modal-close" onclick="closeAddSubjectModal()">✕</button>
+    </div>
+
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.5;">
+      Define your custom subject below. Add your subtopics, paste a YouTube lecture link or your lecture notes, and PadhaiKairo will build your personalized mastery graph and schedule.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Subject / Course Title *</label>
+      <input type="text" id="modal-subject-title" placeholder="e.g. Machine Learning & Neural Networks">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Subtopics (comma-separated) *</label>
+      <input type="text" id="modal-subtopics" placeholder="e.g. Linear Regression, Gradient Descent, Backpropagation">
+      <div class="form-helper">Each subtopic gets its own mastery score and forgetting curve.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Exam Date</label>
+      <input type="date" id="modal-exam-date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📺 YouTube Lecture Link (optional)</label>
+      <div style="display:flex; gap:0.5rem;">
+        <input type="text" id="modal-yt-url" placeholder="https://youtube.com/watch?v=...">
+        <button class="btn btn-ghost btn-sm" style="white-space:nowrap; flex-shrink:0;" onclick="previewModalYt()">Extract</button>
+      </div>
+      <div id="modal-yt-status" style="font-size:0.74rem; color:var(--text-muted); margin-top:0.3rem; min-height:1.1rem;"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📝 Or Paste Lecture Notes (optional)</label>
+      <textarea id="modal-notes" rows="3" placeholder="Paste your syllabus, notes, or any text from your lectures…"></textarea>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem;" onclick="createSubject()" id="btn-create-subject">
+      ⚡ Generate Mastery Graph & Schedule
+    </button>
+  </div>
+</div>
+
+<!-- ══ EDIT EXAM DATE MODAL ═════════════════════════════════ -->
+<div class="modal-overlay" id="edit-exam-modal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">⏰ Update Target Exam Date</div>
+      <button class="modal-close" onclick="closeEditExamModal()">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem; line-height:1.5;">
+      Updating your exam date dynamically adjusts your forgetting curve urgency thresholds and backward-plans your revision slots into Google Calendar.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Subject</label>
+      <input type="text" id="edit-exam-subject-title" disabled style="background:var(--bg-subtle); color:var(--text-muted); cursor:not-allowed;">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">New Target Exam Date *</label>
+      <input type="date" id="edit-exam-date-input">
+      <div class="form-helper" id="edit-exam-helper">Select the date of your upcoming exam or test.</div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem;" onclick="saveExamDate()" id="btn-save-exam-date">
+      ⚡ Update & Recalculate Revision Plan
+    </button>
+  </div>
+</div>
+
+<!-- ══ EDIT SUBJECT MODAL ═══════════════════════════════════ -->
+<div class="modal-overlay" id="edit-subject-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">📚 Edit Subject Details</div>
+      <button class="modal-close" onclick="closeEditSubjectModal()">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem; line-height:1.5;">
+      Update the title, target exam date, or add new subtopics to your active subject.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Subject Title *</label>
+      <input type="text" id="edit-subject-title" placeholder="e.g. Machine Learning & Neural Networks">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Target Exam Date</label>
+      <input type="date" id="edit-subject-exam-date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Subtopics (comma-separated)</label>
+      <input type="text" id="edit-subject-subtopics" placeholder="e.g. Linear Regression, Backpropagation, Attention">
+      <div class="form-helper">Adding new subtopics will automatically initialize their mastery nodes.</div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem;" onclick="saveSubjectEdit()" id="btn-save-subject-edit">
+      ✓ Save Subject Changes
+    </button>
+  </div>
+</div>
+
+<!-- ══ STUDENT PROFILE MODAL ════════════════════════════════ -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">👤 Student Profile & Settings</div>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem; line-height:1.5;">
+      Customize your learning schedule preferences, daily study goals, and notification channels.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Student Name</label>
+      <input type="text" id="profile-name-input" placeholder="Your Name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notification Email (Gmail / Nudges)</label>
+      <input type="email" id="profile-email-input" placeholder="student@gmail.com">
+      <div class="form-helper">Retention Guardian nudges and approvals are sent to this address.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Daily Study Goal</label>
+      <select id="profile-goal-select" class="input" style="padding:0.6rem 0.85rem; border:1.5px solid var(--border); background:var(--bg-input); color:var(--text-primary); border-radius:var(--radius-md);">
+        <option value="15">15 minutes / day (Light)</option>
+        <option value="30" selected>30 minutes / day (Standard)</option>
+        <option value="45">45 minutes / day (Focused)</option>
+        <option value="60">60 minutes / day (Intensive)</option>
+        <option value="90">90 minutes / day (Exam Sprint)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Revision Pace & Intensity</label>
+      <select id="profile-pace-select" class="input" style="padding:0.6rem 0.85rem; border:1.5px solid var(--border); background:var(--bg-input); color:var(--text-primary); border-radius:var(--radius-md);">
+        <option value="relaxed">Relaxed (Gentle spaced intervals)</option>
+        <option value="moderate" selected>Moderate (Standard forgetting curve balance)</option>
+        <option value="intense">Intensive (Frequent active recall drills)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Timezone</label>
+      <input type="text" id="profile-tz-input" placeholder="Asia/Kolkata" value="Asia/Kolkata">
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem;" onclick="saveStudentProfile()" id="btn-save-profile">
+      ✓ Save Profile Preferences
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCRIPTS ══════════════════════════════════════════════ -->
+<script src="/static/app.js"></script>
+</body>
+</html>

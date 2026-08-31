@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PadhaiKairo — The study coach that works while you sleep</title>
+  <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg">
+  <link rel="shortcut icon" href="/static/favicon/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="/static/favicon/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    body { overflow-x: hidden; }
+
+    /* Landing-specific overrides */
+    .landing-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .landing-main { flex: 1; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Animated gradient blob behind hero */
+    .hero-blob {
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse at 50% 50%,
+        rgba(99,102,241,0.12) 0%,
+        rgba(129,140,248,0.06) 50%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .landing-hero { position: relative; z-index: 1; }
+
+    /* Demo screenshot area */
+    .demo-container {
+      max-width: 900px;
+      margin: 3rem auto 0;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .demo-frame {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-lg), 0 0 60px -10px rgba(99,102,241,0.2);
+      overflow: hidden;
+    }
+
+    .demo-topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-dot.r { background: #FF5F57; }
+    .demo-dot.y { background: #FFBD2E; }
+    .demo-dot.g { background: #28CA41; }
+
+    .demo-url {
+      flex: 1;
+      background: var(--bg-subtle);
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .demo-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0;
+      height: 340px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .demo-sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .demo-source-item {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.45rem 0.55rem;
+      font-size: 0.7rem;
+    }
+
+    .demo-source-item .src-title { font-weight: 600; color: var(--text-primary); }
+    .demo-source-item .src-meta { color: var(--text-muted); margin-top: 2px; font-size: 0.65rem; }
+
+    .demo-nav { margin-top: auto; }
+    .demo-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.5rem;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      cursor: default;
+    }
+
+    .demo-nav-item.act {
+      background: var(--brand-light);
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .demo-main {
+      background: var(--bg-page);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      overflow: hidden;
+    }
+
+    .demo-msg {
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.73rem;
+      line-height: 1.4;
+      max-width: 82%;
+    }
+
+    .demo-msg.user {
+      background: var(--brand);
+      color: white;
+      align-self: flex-end;
+      border-radius: 8px 8px 2px 8px;
+    }
+
+    .demo-msg.agent {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      align-self: flex-start;
+      border-radius: 8px 8px 8px 2px;
+    }
+
+    .demo-msg.agent strong { color: var(--brand); }
+
+    /* CTA section */
+    .cta-section {
+      padding: 5rem 1.5rem;
+      background: var(--bg-page);
+    }
+  </style>
+</head>
+<body class="landing-body">
+<div class="landing-wrapper">
+
+  <!-- NAV -->
+  <nav class="landing-nav">
+    <a href="/" class="wordmark">
+      <span class="wm-icon">
+        <img src="/static/logo3.png" alt="PadhaiKairo">
+      </span>
+      PadhaiKairo
+    </a>
+    <div class="nav-right">
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle" title="Toggle theme" style="border:1px solid var(--border);">🌙</button>
+      <a href="/auth/login" class="btn-google">
+        <svg class="g-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/>
+          <path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.615 24 12.255 24z"/>
+          <path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"/>
+          <path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.64 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/>
+        </svg>
+        Sign in with Google
+      </a>
+    </div>
+  </nav>
+
+  <main class="landing-main">
+
+    <!-- HERO -->
+    <section style="position:relative; overflow:hidden; background: var(--bg-page);">
+      <div class="hero-blob"></div>
+      <div class="landing-hero">
+        <div class="hero-badge">✦ AI-Powered Spaced Learning</div>
+        <h1>
+          The study coach that<br>
+          <span class="accent">works while you sleep.</span>
+        </h1>
+        <p>
+          Paste your lecture link. PadhaiKairo builds your personal mastery map, quizzes you,
+          and acts before your exam — booking revision blocks in Google Calendar and
+          sending nudges when you start to forget.
+        </p>
+        <div class="hero-cta-group">
+          <a href="/auth/login" class="btn btn-primary btn-lg">
+            Get Started Free →
+          </a>
+          <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
+        </div>
+      </div>
+
+      <!-- App Preview -->
+      <div class="demo-container">
+        <div class="demo-frame">
+          <div class="demo-topbar">
+            <div class="demo-dot r"></div>
+            <div class="demo-dot y"></div>
+            <div class="demo-dot g"></div>
+            <div class="demo-url">padhaikairo.app/app</div>
+          </div>
+          <div class="demo-body">
+            <div class="demo-sidebar">
+              <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin-bottom:.4rem;">Sources</div>
+              <div class="demo-source-item">
+                <div class="src-title">📺 Neural Networks</div>
+                <div class="src-meta">3Blue1Brown · 18,430 chars ✓</div>
+              </div>
+              <div class="demo-source-item">
+                <div class="src-title">📝 Lecture Notes</div>
+                <div class="src-meta">Pasted text · 420 chars ✓</div>
+              </div>
+              <div class="demo-nav">
+                <div class="demo-nav-item act">💬 Chat Coach</div>
+                <div class="demo-nav-item">🗂️ Flashcards</div>
+                <div class="demo-nav-item">📝 Practice Quiz</div>
+                <div class="demo-nav-item">🚨 Guardian</div>
+              </div>
+            </div>
+            <div class="demo-main">
+              <div class="demo-msg agent">
+                Hello! I'm your <strong>PadhaiKairo Coach</strong>. I've loaded your <strong>Neural Networks lecture</strong>. Ask me anything!
+              </div>
+              <div class="demo-msg user">Why does backpropagation use the chain rule?</div>
+              <div class="demo-msg agent">
+                Great intuition to explore! Before I explain — what do you think the chain rule helps us do when there are <strong>multiple nested functions</strong> in a computation graph? Take a guess!
+              </div>
+              <div class="demo-msg user">It helps compute gradients through each layer?</div>
+              <div class="demo-msg agent">
+                Exactly right! 🎉 In your <strong>3Blue1Brown lecture</strong> (18:42), he shows how each weight's gradient is a product of upstream gradients...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <div class="social-strip" style="margin-top:3rem;">
+      <span>🎓 Powered by <strong>Gemini AI</strong></span>
+      <span>📅 Syncs with <strong>Google Calendar</strong></span>
+      <span>📧 Sends via <strong>Gmail API</strong></span>
+      <span>📺 Ingests <strong>YouTube Lectures</strong></span>
+      <span>☁️ Runs on <strong>Google Cloud Run</strong></span>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <section class="landing-section" id="how-it-works">
+      <div class="section-label">How it works</div>
+      <div class="section-title">Three steps to owning your exam</div>
+      <div class="section-sub">No setup complexity. Just paste your lecture link and PadhaiKairo handles the rest — even when you're not studying.</div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Drop in your lecture</h3>
+          <p>Paste a YouTube link or your lecture notes. PadhaiKairo extracts the full transcript and builds a grounded knowledge base specific to your course.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>AI maps your mastery</h3>
+          <p>Quiz yourself on key subtopics. PadhaiKairo builds a personal forgetting-curve model — tracking how fast each concept decays in your memory over time.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Coach acts before you forget</h3>
+          <p>A nightly watchdog detects decaying knowledge, books a revision block in your Google Calendar, and drafts a nudge email — you approve, it sends.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- FEATURES -->
+    <section class="landing-section">
+      <div class="section-label">Features</div>
+      <div class="section-title">Everything you need to master any subject</div>
+      <div class="section-sub">NotebookLM-style source grounding with an autonomous retention engine on top.</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">💬</span>
+          <h3>Socratic Chat Coach</h3>
+          <p>Guides you to reason through concepts step-by-step — grounded in your own lecture notes and YouTube transcripts, not generic internet answers.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📺</span>
+          <h3>YouTube Lecture Ingestion</h3>
+          <p>Paste any YouTube link. PadhaiKairo extracts full captions in seconds (Cloud Run compatible, no browser needed) and makes them searchable by your coach.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Forgetting Curve Engine</h3>
+          <p>Every quiz answer updates a per-concept mastery model with time-decay. PadhaiKairo knows not just what you scored — but what you're currently forgetting.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🗂️</span>
+          <h3>Active Recall Flashcards</h3>
+          <p>3D flip cards generated from your lecture materials. Keyboard-controlled with Space, ← →. Study mode or self-rated quiz mode.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📝</span>
+          <h3>Practice Drills & Quizzes</h3>
+          <p>5-question conceptual MCQ drills for any subtopic. Instant grading with explanations, and mastery scores update automatically after each attempt.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📖</span>
+          <h3>Study Guides & Briefings</h3>
+          <p>One click generates a structured briefing document with key definitions, comparison tables, and FAQs — grounded entirely in your ingested sources.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🚨</span>
+          <h3>Autonomous Retention Guardian</h3>
+          <p>A nightly agent that needs no prompt. Detects decaying mastery → books a calendar block → drafts a nudge email. You approve before anything sends.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📅</span>
+          <h3>Real Google Calendar Integration</h3>
+          <p>Revision sessions are written directly into your Google Calendar — next to your actual schedule. Not a second app. Your real calendar.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔒</span>
+          <h3>Human-in-the-Loop Control</h3>
+          <p>Every agent action that touches the real world (Calendar events, Gmail) requires your explicit approval. Autonomy with a paper trail.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- USP CALLOUT -->
+    <section class="cta-section">
+      <div class="usp-callout">
+        <h2>Every other study app waits for you to ask.<br>PadhaiKairo doesn't.</h2>
+        <p>
+          ChatGPT, NotebookLM, and Gemini are tools you visit. PadhaiKairo is an agent that works for you —
+          monitoring your knowledge decay, booking revision time, and sending nudges while you sleep.
+        </p>
+        <a href="/auth/login" class="btn-google" style="margin: 0 auto; display:inline-flex;">
+          <svg class="g-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/>
+            <path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.615 24 12.255 24z"/>
+            <path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"/>
+            <path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.64 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/>
+          </svg>
+          Get Started with Google — it's free
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="landing-footer">
+    <span style="display:inline-flex; align-items:center; gap:0.45rem;">
+      <img src="/static/logo3.png" alt="Logo" style="width:20px; height:20px; object-fit:contain; border-radius:4px; vertical-align:middle;">
+      <strong>PadhaiKairo</strong> — The study coach that works while you sleep.
+    </span>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/abhi20b02/AIAgentsHackathon" style="color:var(--brand);" target="_blank">GitHub</a>
+  </footer>
+</div>
+
+<script>
+  // Theme toggle
+  (function() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.innerText = saved === 'dark' ? '☀️' : '🌙';
+  })();
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.innerText = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('theme', next);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+client_secret*.json
+token.json
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+transcripts/
+ingest_cost_log.jsonl
+*.log
+scripts/askpass.*
+scripts/inspect_db.py
+scripts/cleanup_demo_db.py

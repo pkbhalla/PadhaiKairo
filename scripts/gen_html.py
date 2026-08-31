@@ -1,0 +1,285 @@
+from pathlib import Path
+
+html = """<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Learning Coach | Autonomous Spaced Mastery Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-logo">🎓</div>
+            <div class="brand-text">
+                <h1>Agentic Learning Coach</h1>
+                <p>Autonomous Spaced Mastery Guardian & AI Study Platform</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- Active Subject / Course Selector -->
+            <div class="select-container">
+                <span>📚</span>
+                <select id="course-select" onchange="handleCourseSelect(this.value)">
+                    <option value="__new__">+ Add New Subject / Course</option>
+                </select>
+            </div>
+
+            <!-- Google OAuth Status Badge -->
+            <div id="auth-badge-container">
+                <button class="auth-btn" onclick="promptGoogleSignIn()">
+                    <span>Sign in with Google</span>
+                </button>
+            </div>
+
+            <!-- Dark / Light Theme Toggle -->
+            <button class="theme-btn" onclick="toggleTheme()" id="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
+
+            <!-- Autonomous Retention Guardian Scan Button -->
+            <button class="btn-guardian" onclick="triggerRetentionGuardian()" id="btn-guardian">⚡ Run Retention Scan</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <div class="tab-item active" onclick="switchTab('mastery')">📊 Mastery & Decay Graph</div>
+        <div class="tab-item" onclick="switchTab('tutor')">💬 Socratic Tutor & Coach</div>
+        <div class="tab-item" onclick="switchTab('guides')">📖 Study Guides & Briefings</div>
+        <div class="tab-item" onclick="switchTab('flashcards')">🗂️ Active Recall Flashcards</div>
+        <div class="tab-item" onclick="switchTab('drills')">📝 Practice Quizzes</div>
+        <div class="tab-item" onclick="switchTab('guardian')">🚨 Retention Guardian & Calendar</div>
+        <div class="tab-item" onclick="switchTab('sources')">📁 Ingested Sources & Transcripts</div>
+    </div>
+
+    <div class="container">
+        <!-- TAB 1: MASTERY & DECAY GRAPH -->
+        <div id="tab-mastery" class="tab-content active grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📊 Conceptual Mastery Graph (Forgetting Curve Engine)</div>
+                    <button class="btn-new-course" onclick="showNewCourseModal()">+ Add New Subject</button>
+                </div>
+                <div class="card-body" id="mastery-container">
+                    <p style="color:var(--text-muted);">Loading mastery graph...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💡 How Spaced Retention Works</div>
+                </div>
+                <div class="card-body" style="font-size:0.9rem; line-height:1.6;">
+                    <p>Unlike chatbots that treat knowledge as permanent, <strong>Agentic Learning Coach</strong> models human memory forgetting curves:</p>
+                    <ul style="margin:0.75rem 0 1rem 1.25rem;">
+                        <li><strong>Decay Equation:</strong> Mastery &times; 0.5<sup>(Days / Half-Life)</sup></li>
+                        <li><strong>Adaptive Half-Life:</strong> Extends with successful recall passes (from 7 to 21 days).</li>
+                        <li><strong>Autonomous Action:</strong> When retention drops below 50%, the Guardian schedules a Calendar block and drafts a study nudge.</li>
+                    </ul>
+                    <div style="background:var(--bg-subtle); padding:0.9rem; border-radius:8px; border:1px solid var(--border-color);">
+                        <strong>Target Exam:</strong> <span id="exam-badge" style="font-weight:700; color:var(--primary);">5 Days Left</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SOCRATIC TUTOR & COACH -->
+        <div id="tab-tutor" class="tab-content grid-1">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🤖 Socratic Learning Coach (Grounded in Ingested Lectures)</div>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Guides your reasoning step-by-step using your notes</span>
+                </div>
+                <div class="card-body">
+                    <div class="chat-box" id="chat-box">
+                        <div class="msg msg-agent">
+                            Hello! I am your <strong>Socratic Learning Coach</strong>. Ask me any conceptual question or paste your lecture content to start learning!
+                        </div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Ask a question about your subject, request a quiz, or ask to plan revision..." onkeypress="handleKey(event)">
+                        <button class="btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                    <div class="quick-chips">
+                        <span class="chip" onclick="quickPrompt('Why do neural networks require backpropagation?')">💡 Backpropagation</span>
+                        <span class="chip" onclick="quickPrompt('Explain the self-attention mechanism in Transformers')">🤖 Transformers</span>
+                        <span class="chip" onclick="quickPrompt('How does L2 regularization prevent overfitting?')">⚖️ Overfitting</span>
+                        <span class="chip" onclick="quickPrompt('Make my study plan for Google Calendar')">📅 Plan Revision into Calendar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: STUDY GUIDES & BRIEFINGS -->
+        <div id="tab-guides" class="tab-content grid-1">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📖 Instant Study Guides & Executive Briefings</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="guide-topic-input" placeholder="Subtopic name (e.g. Backpropagation)" style="width:250px;">
+                        <button class="btn-primary" onclick="generateStudyGuide()">⚡ Generate Guide</button>
+                    </div>
+                </div>
+                <div class="card-body" id="guide-content" style="line-height:1.7;">
+                    <p style="color:var(--text-muted);">Select or type a subtopic above to generate a comprehensive NotebookLM briefing document with comparison tables and FAQs.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: FLASHCARDS -->
+        <div id="tab-flashcards" class="tab-content grid-1">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🗂️ Active Recall Flashcard Decks</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="flashcard-topic-input" placeholder="Subtopic (e.g. Transformers)" style="width:200px;">
+                        <button class="btn-primary" onclick="generateFlashcards()">Generate Deck</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Click any card to flip and test your active recall.</p>
+                    <div class="flashcard-grid" id="flashcard-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: PRACTICE DRILLS -->
+        <div id="tab-drills" class="tab-content grid-1">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title" id="quiz-panel-title">📝 Targeted Practice Drill</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="quiz-topic-input" placeholder="Subtopic (e.g. Gradient Descent)" style="width:200px;">
+                        <button class="btn-primary" onclick="generateCustomQuiz()">Generate Drill</button>
+                        <button class="btn-approve" onclick="submitQuiz()" id="btn-submit-quiz" style="display:none;">Submit Answers</button>
+                    </div>
+                </div>
+                <div class="card-body" id="quiz-body">
+                    <p style="color:var(--text-muted);">Click a subtopic from your mastery graph or enter a topic above to start a 5-question conceptual practice drill.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: RETENTION GUARDIAN & CALENDAR -->
+        <div id="tab-guardian" class="tab-content grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🚨 Proactive Study Nudges (Approval Queue)</div>
+                    <span style="font-size:0.8rem; background:var(--danger-bg); color:var(--danger); padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">Human Oversight Gate</span>
+                </div>
+                <div class="card-body" id="nudges-container">
+                    <p style="color:var(--text-muted);">No pending nudges in queue.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📅 Google Calendar Integration</div>
+                    <button class="btn-primary" onclick="triggerCalendarPlan()">⚡ Sync Calendar Plan</button>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.88rem; line-height:1.5; margin-bottom:1rem;">
+                        Spaced revision slots backward-planned directly into your primary Google Calendar before exam day.
+                    </p>
+                    <div style="background:var(--bg-subtle); padding:1rem; border-radius:8px; border:1px solid var(--border-color); font-size:0.88rem;">
+                        ✅ Google Calendar connected with OAuth authorization.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 7: SOURCE MATERIALS & YOUTUBE TRANSCRIPTS -->
+        <div id="tab-sources" class="tab-content grid-1">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📁 Ingested Course Sources & YouTube Transcripts</div>
+                    <button class="btn-primary" onclick="showNewCourseModal()">+ Add New Material / Lecture</button>
+                </div>
+                <div class="card-body" id="sources-container">
+                    <p style="color:var(--text-muted);">Loading sources...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW COURSE / SUBJECT CREATION MODAL -->
+    <div class="modal-overlay" id="new-course-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🚀 Add What You Are Learning</h2>
+                <button onclick="closeNewCourseModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-muted); cursor:pointer;">&times;</button>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                Pick a quick preset or type custom subject details and paste a YouTube video:
+            </p>
+
+            <div class="preset-btns">
+                <button class="preset-btn" onclick="selectPresetCourse('Machine Learning & Neural Networks', 'Linear Regression, Gradient Descent, Backpropagation, Transformers, Overfitting', 'https://www.youtube.com/watch?v=aircAruvnKk')">🤖 Neural Networks Lecture</button>
+                <button class="preset-btn" onclick="selectPresetCourse('Operating Systems', 'Process Scheduling, Deadlocks & Sync, Virtual Memory, Paging & TLB', '')">💻 Operating Systems</button>
+                <button class="preset-btn" onclick="selectPresetCourse('Database Systems (DBMS)', 'ER Modeling, Relational Algebra, SQL & Joins, Normalization, ACID', '')">🎓 DBMS</button>
+            </div>
+
+            <div class="form-group">
+                <label>Subject / Course Title</label>
+                <input type="text" id="course-title-input" placeholder="e.g. Machine Learning & Neural Networks" value="Machine Learning & Neural Networks">
+            </div>
+
+            <div class="form-group">
+                <label>Subtopics (Comma-separated)</label>
+                <input type="text" id="course-topics-input" placeholder="e.g. Linear Regression, Gradient Descent, Backpropagation, Transformers, Overfitting" value="Linear Regression, Gradient Descent, Backpropagation, Transformers, Overfitting">
+            </div>
+
+            <div class="form-group">
+                <label>Exam Target Date</label>
+                <input type="date" id="course-exam-date" value="2026-09-12">
+            </div>
+
+            <div class="form-group">
+                <label>📺 YouTube Video Lecture Link (Optional)</label>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="course-yt-url" placeholder="https://www.youtube.com/watch?v=aircAruvnKk" value="https://www.youtube.com/watch?v=aircAruvnKk">
+                    <button class="btn-primary" type="button" style="white-space:nowrap; padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="previewYouTubeTranscript()">Fetch Captions</button>
+                </div>
+                <div id="yt-preview-status" style="font-size:0.78rem; margin-top:0.35rem; color:var(--text-muted);">
+                    Paste a YouTube link to extract lecture captions automatically.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>📝 Or Paste Lecture Notes / Text (Optional)</label>
+                <textarea id="course-notes-input" rows="3" placeholder="Paste your syllabus or lecture notes here..."></textarea>
+            </div>
+
+            <button class="btn-primary" style="width:100%; padding:0.8rem; font-size:1rem;" onclick="submitCreateCourse()" id="btn-submit-create-course">
+                ⚡ Generate Dynamic Mastery Graph & Schedule
+            </button>
+        </div>
+    </div>
+
+    <!-- GUEST FUNNEL SIGN-IN MODAL (Triggered after 2 free chats) -->
+    <div class="modal-overlay" id="auth-prompt-modal">
+        <div class="modal-content" style="text-align:center; max-width:480px;">
+            <div style="font-size:3rem; margin-bottom:0.75rem;">🎓</div>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem;">Save Your Learning Journey!</h2>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.5rem;">
+                You've experienced 2 free coach interactions! Sign in with your Google Account to sync revision blocks directly to your <strong>Google Calendar</strong>, save your courses, and receive proactive study nudges.
+            </p>
+            <button class="auth-btn" style="width:100%; justify-content:center; padding:0.8rem; font-size:1rem; margin-bottom:0.75rem;" onclick="promptGoogleSignIn(); closeAuthPromptModal();">
+                <span>Sign in with Google (abhi20b02@gmail.com)</span>
+            </button>
+            <button onclick="closeAuthPromptModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem;">
+                Continue exploring as Guest
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
+"""
+
+Path("static/index.html").write_text(html, encoding="utf-8")
+print("index.html generated!")
