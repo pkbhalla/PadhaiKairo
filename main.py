@@ -232,15 +232,21 @@ async def auth_callback(request: Request, code: str = None, error: str = None):
         redirect_uri = get_callback_uri(request)
         creds = exchange_code_for_token(code, redirect_uri=redirect_uri)
         if creds:
-            info = get_user_info(creds)
-            email = info.get("email")
-            if email:
-                lid = email.split("@")[0].replace(".", "_")
-                get_or_create_learner(
-                    learner_id=lid,
-                    name=info.get("name") or email.split("@")[0].title(),
-                    email=email
-                )
+            try:
+                info = get_user_info(creds)
+                email = info.get("email")
+                if email:
+                    lid = email.split("@")[0].replace(".", "_")
+                    try:
+                        get_or_create_learner(
+                            learner_id=lid,
+                            name=info.get("name") or email.split("@")[0].title(),
+                            email=email
+                        )
+                    except Exception as db_err:
+                        print(f"Notice: Firestore learner upsert skipped: {db_err}")
+            except Exception as info_err:
+                print(f"Notice: Google userinfo skipped: {info_err}")
         return RedirectResponse(url="/app", status_code=302)
     except Exception as e:
         return HTMLResponse(
