@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_ID: project-925dcd70-fea8-462c-b7a
   SERVICE_NAME: padhaikairo
-  REGION: us-central1
+  REGION: asia-south1
 
 jobs:
   deploy:
@@ -42,4 +42,4 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars USE_VERTEX_AI=true,VERTEX_AI_LOCATION=us-central1,GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},MODEL=gemini-2.5-flash
+            --set-env-vars USE_VERTEX_AI=true,VERTEX_AI_LOCATION=asia-south1,GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},MODEL=gemini-2.5-flash
