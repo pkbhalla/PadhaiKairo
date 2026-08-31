@@ -28,6 +28,7 @@ _client = None
 # Updated: removed deprecated gemini-2.x models (retired/404).
 # Current valid models as of 2026.
 MODEL_PRIORITY_POOL = [
+    "gemini-3.6-flash",
     "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",

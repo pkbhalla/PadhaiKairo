@@ -1313,7 +1313,7 @@ function renderMarkdown(md) {
   html = html.replace(/((?:<li class="md-li">.*?<\/li>\s*)+)/gim, '<ul class="md-ul">$1</ul>');
 
   // Numbered Lists
-  html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="md-oli">$1</li>');
+  html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="md-oli">$1.$2</li>');
   html = html.replace(/((?:<li class="md-oli">.*?<\/li>\s*)+)/gim, '<ol class="md-ol">$1</ol>');
 
   // Linebreaks and paragraphs
