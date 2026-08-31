@@ -174,6 +174,24 @@ async def serve_app():
     return HTMLResponse("<h1>App not found</h1>", status_code=404)
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def serve_privacy():
+    """Serve Privacy Policy page."""
+    p_path = static_dir / "privacy.html"
+    if p_path.exists():
+        return HTMLResponse(content=p_path.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Privacy Policy</h1><p>Contact: prathambhalla188@gmail.com</p>")
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def serve_terms():
+    """Serve Terms of Service page."""
+    t_path = static_dir / "terms.html"
+    if t_path.exists():
+        return HTMLResponse(content=t_path.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Terms of Service</h1><p>Contact: prathambhalla188@gmail.com</p>")
+
+
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     fav_path = static_dir / "favicon.ico"
