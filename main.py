@@ -187,16 +187,39 @@ async def health_check():
     return {"status": "ok", "version": "2.2.0"}
 
 
+def get_callback_uri(request: Request) -> str:
+    """Dynamically determine the OAuth callback URI for local dev or Cloud Run."""
+    override = os.getenv("OAUTH_REDIRECT_URI")
+    if override:
+        return override
+    
+    # Check headers for Cloud Run / HTTPS reverse proxy
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", request.url.netloc))
+    
+    if "run.app" in host:
+        proto = "https"
+        
+    return f"{proto}://{host}/auth/callback"
+
+
 # Google OAuth Routes
 @app.get("/auth/login")
-async def auth_login():
+async def auth_login(request: Request):
     """Redirect user to Google OAuth authorization page."""
-    auth_url = get_authorization_url()
-    return RedirectResponse(url=auth_url, status_code=302)
+    try:
+        redirect_uri = get_callback_uri(request)
+        auth_url = get_authorization_url(redirect_uri=redirect_uri)
+        return RedirectResponse(url=auth_url, status_code=302)
+    except Exception as e:
+        return HTMLResponse(
+            f"<h2>OAuth Setup Error: {e}</h2><p>Please check Google OAuth client configuration.</p><a href='/'>Back to PadhaiKairo</a>",
+            status_code=500
+        )
 
 
 @app.get("/auth/callback")
-async def auth_callback(code: str = None, error: str = None):
+async def auth_callback(request: Request, code: str = None, error: str = None):
     """Handle Google OAuth callback, exchange code for token, redirect to /app."""
     if error:
         return HTMLResponse(
@@ -206,7 +229,8 @@ async def auth_callback(code: str = None, error: str = None):
     if not code:
         return RedirectResponse(url="/", status_code=302)
     try:
-        creds = exchange_code_for_token(code)
+        redirect_uri = get_callback_uri(request)
+        creds = exchange_code_for_token(code, redirect_uri=redirect_uri)
         if creds:
             info = get_user_info(creds)
             email = info.get("email")
