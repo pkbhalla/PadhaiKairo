@@ -25,10 +25,12 @@ _cache: Dict[str, Any] = {}
 _client = None
 
 # Model priority pool — confirmed available in asia-south1 (Mumbai)
+# Updated: removed deprecated gemini-2.x models (retired/404).
+# Current valid models as of 2026.
 MODEL_PRIORITY_POOL = [
     "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
 ]
 
 
