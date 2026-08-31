@@ -22,24 +22,24 @@ _last_call_time = 0.0
 _cache: Dict[str, Any] = {}
 _api_client = None
 
-# Free-tier & API Key model priority pool
+# Model priority pool for asia-south1 (Mumbai)
 MODEL_PRIORITY_POOL = [
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash",
+    "gemini-3.5-flash",
     "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
     "gemini-2.0-flash",
-    "gemini-flash-latest",
+    "gemini-1.5-flash",
 ]
 
-# Vertex AI Production model pool (available in asia-south1 / us-central1)
+# Vertex AI Production model pool for asia-south1 (Mumbai)
 VERTEX_PRIORITY_POOL = [
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
     "gemini-1.5-flash",
     "gemini-1.5-flash-002",
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
     "gemini-1.5-flash-001",
-    "gemini-1.5-pro",
 ]
 
 
