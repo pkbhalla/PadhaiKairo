@@ -571,6 +571,46 @@
   </div>
 </div>
 
+<!-- ══ VIEW SOURCE / TRANSCRIPT MODAL ════════════════════════ -->
+<div class="modal-overlay" id="view-source-modal">
+  <div class="modal-box" style="max-width:680px; max-height:85vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:0.5rem; min-width:0;">
+        <span id="view-source-icon" style="font-size:1.3rem; flex-shrink:0;">📄</span>
+        <div style="min-width:0;">
+          <div class="modal-title" id="view-source-title" style="font-size:1.05rem; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Source Title</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;" id="view-source-meta">—</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeViewSourceModal()">✕</button>
+    </div>
+
+    <div id="view-source-link-container" style="display:none; margin-bottom:0.75rem;">
+      <a id="view-source-url" href="#" target="_blank" style="font-size:0.8rem; color:var(--brand); display:inline-flex; align-items:center; gap:0.3rem;">
+        🔗 Open Original YouTube Video ↗
+      </a>
+    </div>
+
+    <div style="flex:1; overflow-y:auto; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; max-height:50vh;">
+      <pre id="view-source-content" style="white-space:pre-wrap; font-family:'Inter', sans-serif; font-size:0.85rem; color:var(--text-primary); line-height:1.6; margin:0;"></pre>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="copySourceContent()">
+        📋 Copy Text
+      </button>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="generateCardsFromCurrentSource()">
+          🃏 Flashcards
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="generateGuideFromCurrentSource()">
+          📖 Study Guide
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SCRIPTS ══════════════════════════════════════════════ -->
 <script src="/static/app.js"></script>
 </body>

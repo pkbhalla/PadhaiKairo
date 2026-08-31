@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "project-925dcd70-fea8-462c-b7a")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-MODEL = os.getenv("MODEL", "gemini-2.5-flash")
+MODEL = os.getenv("MODEL", "gemini-3.5-flash-lite")
 REGION = os.getenv("REGION", "asia-south1")
 FIRESTORE_LOCATION = os.getenv("FIRESTORE_LOCATION", "asia-south1")
 DEV_BYPASS = os.getenv("DEV_BYPASS", "1") == "1"

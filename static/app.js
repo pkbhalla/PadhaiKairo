@@ -219,6 +219,8 @@ async function loadSources() {
   } catch (e) { console.error('loadSources:', e); }
 }
 
+let activeSource = null;
+
 function renderSourcesList() {
   const container = document.getElementById('sources-list');
   if (!container) return;
@@ -239,17 +241,80 @@ function renderSourcesList() {
     const chars = src.charCount || (src.content ? src.content.length : 0);
     const title = src.title || 'Untitled Source';
     return `
-      <div class="source-card" title="${title}">
+      <div class="source-card" onclick="openSourceModal('${escAttr(src.id)}')" style="cursor:pointer;" title="Click to view full transcript & study notes">
         <div class="source-card-header">
           <span class="source-icon">${icon}</span>
           <span class="source-name">${truncate(title, 42)}</span>
         </div>
         <div class="source-meta">
           <span class="source-badge ${badgeClass}">${badgeLabel}</span>
-          <span>${chars.toLocaleString()} chars</span>
+          <span>${chars.toLocaleString()} chars · View ↗</span>
         </div>
       </div>`;
   }).join('');
+}
+
+function openSourceModal(sourceId) {
+  const src = state.sources.find(s => s.id === sourceId);
+  if (!src) return;
+  activeSource = src;
+
+  const modal = document.getElementById('view-source-modal');
+  const titleEl = document.getElementById('view-source-title');
+  const metaEl = document.getElementById('view-source-meta');
+  const iconEl = document.getElementById('view-source-icon');
+  const contentEl = document.getElementById('view-source-content');
+  const linkBox = document.getElementById('view-source-link-container');
+  const linkEl = document.getElementById('view-source-url');
+
+  if (titleEl) titleEl.innerText = src.title || 'Untitled Source';
+  if (iconEl) iconEl.innerText = src.type === 'youtube_transcript' ? '📺' : src.type === 'text_note' ? '📝' : '📄';
+  if (metaEl) {
+    const typeLabel = src.type === 'youtube_transcript' ? 'YouTube Lecture Transcript' : src.type === 'text_note' ? 'Lecture Notes' : 'Study Document';
+    const chars = (src.charCount || src.content?.length || 0).toLocaleString();
+    metaEl.innerText = `${typeLabel} • ${chars} characters`;
+  }
+  if (contentEl) contentEl.innerText = src.content || 'No content found.';
+
+  if (src.sourceUrl) {
+    if (linkBox) linkBox.style.display = 'block';
+    if (linkEl) { linkEl.href = src.sourceUrl; linkEl.innerText = `🔗 ${src.sourceUrl}`; }
+  } else {
+    if (linkBox) linkBox.style.display = 'none';
+  }
+
+  if (modal) modal.classList.add('open');
+}
+
+function closeViewSourceModal() {
+  const modal = document.getElementById('view-source-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function copySourceContent() {
+  if (activeSource?.content) {
+    navigator.clipboard.writeText(activeSource.content).then(() => alert('Source content copied to clipboard!'));
+  }
+}
+
+function generateCardsFromCurrentSource() {
+  closeViewSourceModal();
+  switchPanel('flashcards');
+  if (activeSource?.title) {
+    const input = document.getElementById('fc-topic-input');
+    if (input) input.value = activeSource.title.replace('YouTube Lecture — ', '').replace('Lecture Video (', '').replace(')', '').trim();
+  }
+  generateFlashcards();
+}
+
+function generateGuideFromCurrentSource() {
+  closeViewSourceModal();
+  switchPanel('guide');
+  if (activeSource?.title) {
+    const input = document.getElementById('guide-topic-input');
+    if (input) input.value = activeSource.title.replace('YouTube Lecture — ', '').replace('Lecture Video (', '').replace(')', '').trim();
+  }
+  generateStudyGuide();
 }
 
 function updateGroundingBadge() {
@@ -298,20 +363,26 @@ async function fetchYtTranscript() {
     const data = await res.json();
     if (data.success) {
       if (status) status.innerHTML = `<span style="color:var(--success); font-weight:600;">✓ Extracted ${data.charCount.toLocaleString()} chars</span>`;
+      const title = data.title || `YouTube Lecture — ${url.split('v=')[1]?.split('&')[0] || 'Video'}`;
       // Ingest as source
-      await fetch('/sources/add', {
+      const addRes = await fetch('/sources/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `YouTube Lecture — ${url.split('v=')[1]?.split('&')[0] || 'Video'}`,
+          title: title,
           source_type: 'youtube_transcript',
           content: data.text,
+          source_url: url,
           learner_id: state.user.id,
           course_id: state.currentSubjectId
         })
       });
+      const addedData = await addRes.json();
       document.getElementById('yt-url-input').value = '';
       await loadSources();
+      if (addedData.id) {
+        openSourceModal(addedData.id);
+      }
     } else {
       if (status) status.innerHTML = `<span style="color:var(--warning);">⚠️ ${data.error || 'No captions found'}</span>`;
     }

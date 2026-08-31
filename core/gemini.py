@@ -1,7 +1,7 @@
 """
 core/gemini.py — PadhaiKairo AI Client
-Dual-mode: google-generativeai (dev/free-tier) vs Vertex AI (Cloud Run prod)
-Controlled by USE_VERTEX_AI env var in .env.
+Dual-mode: google-genai (dev/free-tier) vs Vertex AI (Cloud Run prod)
+Controlled by USE_VERTEX_AI env var in .env / Cloud Run.
 """
 import os
 import time
@@ -22,16 +22,25 @@ _last_call_time = 0.0
 _cache: Dict[str, Any] = {}
 _api_client = None
 
-# Free-tier & production model priority pool
+# Free-tier & API Key model priority pool (fast & cost-efficient 3.5 flash-lite first)
 MODEL_PRIORITY_POOL = [
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
     "gemini-1.5-flash",
-    "gemini-flash-latest",
-    "gemini-3.5-flash-lite",
     "gemini-3.5-flash",
-    "gemini-3.6-flash",
-    "gemini-3.7-flash",
+    "gemini-flash-latest",
+]
+
+# Vertex AI Production model pool
+VERTEX_PRIORITY_POOL = [
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-002",
+    "gemini-1.5-flash-001",
 ]
 
 
@@ -90,30 +99,45 @@ def generate_content_with_retry(
             vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=VERTEX_AI_LOCATION)
             generate_content_with_retry._vertex_initialized = True
 
-        model_name = model or MODEL or "gemini-2.5-flash"
-        vertex_model = GenerativeModel(model_name)
-
+        v_candidates = list(dict.fromkeys(([model] if model else []) + [MODEL] + VERTEX_PRIORITY_POOL))
         prompt_text = contents if isinstance(contents, str) else str(contents)
-        full_prompt = f"{system_instruction}\n\n{prompt_text}" if system_instruction else prompt_text
 
-        response = vertex_model.generate_content(
-            full_prompt,
-            generation_config=GenerationConfig(temperature=0.7, max_output_tokens=2048),
-        )
+        gen_dict: Dict[str, Any] = {"temperature": 0.7, "max_output_tokens": 2048}
+        if response_mime_type:
+            gen_dict["response_mime_type"] = response_mime_type
+        generation_config = GenerationConfig(**gen_dict)
 
-        class _Resp:
-            def __init__(self, t): self.text = t
+        last_v_err = None
+        for m in v_candidates:
+            if not m: continue
+            try:
+                vertex_model = GenerativeModel(
+                    m,
+                    system_instruction=[system_instruction] if system_instruction else None
+                )
+                response = vertex_model.generate_content(
+                    prompt_text,
+                    generation_config=generation_config,
+                )
+                if response and response.text:
+                    class _Resp:
+                        def __init__(self, t): self.text = t
+                    result = _Resp(response.text)
+                    if use_cache:
+                        _cache[cache_key] = result
+                    return result
+            except Exception as e:
+                print(f"Notice: Vertex AI model {m} notice: {e}")
+                last_v_err = e
 
-        result = _Resp(response.text)
-        if use_cache:
-            _cache[cache_key] = result
-        return result
+        if last_v_err:
+            raise last_v_err
 
     # ── API KEY MODE (Local Dev / Free Tier) ─────────────────────────────────
     from google.genai import types
 
     client = _get_api_client()
-    candidates = list(dict.fromkeys(([model] if model else []) + MODEL_PRIORITY_POOL))
+    candidates = list(dict.fromkeys(([model] if model else []) + [MODEL] + MODEL_PRIORITY_POOL))
 
     cfg: Dict[str, Any] = {}
     if system_instruction:
@@ -137,9 +161,9 @@ def generate_content_with_retry(
 
     last_err = None
     for m in candidates:
+        if not m: continue
         try:
             if use_chat_afc:
-                # Use Chat.send_message for AFC as recommended by Google GenAI SDK
                 chat = client.chats.create(model=m, config=gen_config)
                 resp = chat.send_message(contents)
             else:
