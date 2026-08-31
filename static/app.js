@@ -487,10 +487,7 @@ function appendChatMsg(text, role) {
   if (!box) return;
   const div = document.createElement('div');
   div.className = `msg msg-${role}`;
-  // Simple markdown: **bold**, newlines
-  div.innerHTML = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+  div.innerHTML = renderMarkdown(text);
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
@@ -1264,14 +1261,64 @@ function escAttr(str) {
 
 function renderMarkdown(md) {
   if (!md) return '';
-  return md
-    .replace(/^# (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^## (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^### (.*$)/gim, '<h4>$1</h4>')
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    .replace(/`(.*?)`/gim, '<code>$1</code>')
-    .replace(/^- (.*$)/gim, '<li>$1</li>')
-    .replace(/\n{2,}/g, '</p><p>')
-    .replace(/\n/g, '<br>');
+  let html = md;
+
+  // Convert code blocks (```lang ... ```)
+  html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    return `<pre class="code-block"><code class="lang-${lang}">${escHtml(code.trim())}</code></pre>`;
+  });
+
+  // Convert markdown tables
+  html = html.replace(/((?:\|[^\n]+\|\r?\n)+)/g, (match) => {
+    const lines = match.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return match;
+    let tableHtml = '<div class="table-responsive"><table class="md-table">';
+    let isHeader = true;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (/^\|[-:\s|]+\|$/.test(line)) {
+        isHeader = false;
+        continue;
+      }
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
+      if (isHeader && i === 0) {
+        tableHtml += '<thead><tr>' + cells.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+      } else {
+        tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+      }
+    }
+    tableHtml += '</tbody></table></div>';
+    return tableHtml;
+  });
+
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h4 class="md-h4">$1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 class="md-h3">$1</h3>');
+  html = html.replace(/^# (.*$)/gim, '<h2 class="md-h2">$1</h2>');
+
+  // Blockquotes
+  html = html.replace(/^> (.*$)/gim, '<blockquote class="md-quote">$1</blockquote>');
+
+  // Bold & Italic (order: triple, double, single, underscores)
+  html = html.replace(/\*\*\*(.*?)\*\*\*/gim, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+  html = html.replace(/\*([^\*\n]+)\*/gim, '<em>$1</em>');
+  html = html.replace(/_([^_\n]+)_/gim, '<em>$1</em>');
+
+  // Inline code
+  html = html.replace(/`([^`\n]+)`/gim, '<code class="inline-code">$1</code>');
+
+  // Bullet Lists
+  html = html.replace(/^\s*[-*•]\s+(.*$)/gim, '<li class="md-li">$1</li>');
+  html = html.replace(/((?:<li class="md-li">.*?<\/li>\s*)+)/gim, '<ul class="md-ul">$1</ul>');
+
+  // Numbered Lists
+  html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="md-oli">$1</li>');
+  html = html.replace(/((?:<li class="md-oli">.*?<\/li>\s*)+)/gim, '<ol class="md-ol">$1</ol>');
+
+  // Linebreaks and paragraphs
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
 }

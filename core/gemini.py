@@ -22,25 +22,24 @@ _last_call_time = 0.0
 _cache: Dict[str, Any] = {}
 _api_client = None
 
-# Free-tier & API Key model priority pool (fast & cost-efficient 3.5 flash-lite first)
+# Free-tier & API Key model priority pool
 MODEL_PRIORITY_POOL = [
-    "gemini-3.5-flash-lite",
     "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-3.5-flash",
     "gemini-flash-latest",
 ]
 
-# Vertex AI Production model pool
+# Vertex AI Production model pool (available in asia-south1 / us-central1)
 VERTEX_PRIORITY_POOL = [
-    "gemini-3.5-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-1.5-flash",
     "gemini-1.5-flash-002",
+    "gemini-2.0-flash",
+    "gemini-2.5-flash",
     "gemini-1.5-flash-001",
+    "gemini-1.5-pro",
 ]
 
 
@@ -125,8 +124,10 @@ def generate_content_with_retry(
                     result = _Resp(response.text)
                     if use_cache:
                         _cache[cache_key] = result
-                    return result
             except Exception as e:
+                print(f"Notice: Vertex AI model {m} notice: {e}")
+                last_v_err = e
+
         if last_v_err:
             if GEMINI_API_KEY or os.getenv("GEMINI_API_KEY"):
                 print("Notice: Vertex AI failed; falling back to GEMINI_API_KEY...")
