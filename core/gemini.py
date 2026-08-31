@@ -127,13 +127,13 @@ def generate_content_with_retry(
                         _cache[cache_key] = result
                     return result
             except Exception as e:
-                print(f"Notice: Vertex AI model {m} notice: {e}")
-                last_v_err = e
-
         if last_v_err:
-            raise last_v_err
+            if GEMINI_API_KEY or os.getenv("GEMINI_API_KEY"):
+                print("Notice: Vertex AI failed; falling back to GEMINI_API_KEY...")
+            else:
+                raise last_v_err
 
-    # ── API KEY MODE (Local Dev / Free Tier) ─────────────────────────────────
+    # ── API KEY MODE (Local Dev / Free Tier / Fallback) ──────────────────────
     from google.genai import types
 
     client = _get_api_client()
